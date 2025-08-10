@@ -2,33 +2,44 @@ const fs = require("fs");
 const { execSync } = require("child_process");
 const path = require("path");
 
-const modelsDir = "./3DModels"; // place your Models here
-const outputDir = "./ModelDefinitions"; // output path of the R3F JSX Files
+function getArgs() {
+  const args = {};
+  process.argv.slice(2).forEach((arg) => {
+    const [key, value] = arg.replace(/^--/, "").split("=");
+    if (key && value) args[key] = value;
+  });
+  return args;
+}
 
-fs.readdirSync(modelsDir).forEach((folder) => {
-  const gltf = path.join(modelsDir, folder, "scene.gltf");
-  if (fs.existsSync(`${outputDir}/${folder}.tsx`)) {
-    console.log(`🚫 Skipped ${modelsDir}/${folder}`);
-    return;
-  }
-  if (!fs.existsSync(gltf)) {
-    fs.readdirSync(`${modelsDir}/${folder}`).forEach((subfolder) => {
-      const subGltf = path.join(modelsDir, folder, subfolder, "scene.gltf");
-      const subFolderFileName = `${subfolder}-${folder}`;
-      if (fs.existsSync(`${outputDir}/${subFolderFileName}.tsx`)) {
-        console.log(`🚫 Skipped ${modelsDir}/${folder}/${subfolder}`);
-        return;
-      }
-      if (!fs.existsSync(subGltf)) return;
-      createFile(subGltf, subFolderFileName);
-    });
-    return;
-  }
+function convertModels({
+  modelsDir = "./3DModels",
+  outputDir = "./ModelDefinitions",
+} = {}) {
+  fs.readdirSync(modelsDir).forEach((folder) => {
+    const gltf = path.join(modelsDir, folder, "scene.gltf");
+    if (fs.existsSync(`${outputDir}/${folder}.tsx`)) {
+      console.log(`🚫 Skipped ${modelsDir}/${folder}`);
+      return;
+    }
+    if (!fs.existsSync(gltf)) {
+      fs.readdirSync(`${modelsDir}/${folder}`).forEach((subfolder) => {
+        const subGltf = path.join(modelsDir, folder, subfolder, "scene.gltf");
+        const subFolderFileName = `${subfolder}-${folder}`;
+        if (fs.existsSync(`${outputDir}/${subFolderFileName}.tsx`)) {
+          console.log(`🚫 Skipped ${modelsDir}/${folder}/${subfolder}`);
+          return;
+        }
+        if (!fs.existsSync(subGltf)) return;
+        createFile(subGltf, subFolderFileName, outputDir);
+      });
+      return;
+    }
 
-  createFile(gltf, folder);
-});
+    createFile(gltf, folder, outputDir);
+  });
+}
 
-function createFile(gltf, folder) {
+function createFile(gltf, folder, outputDir) {
   console.log(`🔄 ${gltf} is being converted`);
 
   const outputFile = path.join(outputDir, `${folder}.tsx`);
@@ -63,3 +74,10 @@ function createFile(gltf, folder) {
   fs.writeFileSync(outputFile, content);
   console.log(`✔️ Successfully processed and wrote: ${outputFile}`);
 }
+
+if (require.main === module) {
+  const args = getArgs();
+  convertModels(args);
+}
+
+module.exports = { convertModels };
