@@ -18,13 +18,17 @@ function convertModels({
   outputDir = "./ModelDefinitions",
 } = {}) {
   fs.readdirSync(modelsDir).forEach((folder) => {
-    const gltf = path.join(modelsDir, folder, "scene.gltf");
+    const folderPath = path.join(modelsDir, folder);
+    if (!fs.statSync(folderPath).isDirectory()) return;
+    const gltf = path.join(folderPath, "scene.gltf");
     if (fs.existsSync(`${outputDir}/${folder}.tsx`)) {
       console.log(`🚫 Skipped ${modelsDir}/${folder}`);
       return;
     }
     if (!fs.existsSync(gltf)) {
       fs.readdirSync(`${modelsDir}/${folder}`).forEach((subfolder) => {
+        const subFolderPath = path.join(modelsDir, folder, subfolder);
+        if (!fs.statSync(subFolderPath).isDirectory()) return;
         const subGltf = path.join(modelsDir, folder, subfolder, "scene.gltf");
         const subFolderFileName = `${subfolder}-${folder}`;
         if (fs.existsSync(`${outputDir}/${subFolderFileName}.tsx`)) {
