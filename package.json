@@ -1,0 +1,23 @@
+{
+  "name": "gltf-to-jsx-batchconverter",
+  "version": "1.0.0",
+  "description": "uses the gltfjsx library to batch convert files into a folder of your choice",
+  "homepage": "https://github.com/IMIHonigmann/bruh#readme",
+  "bugs": {
+    "url": "https://github.com/IMIHonigmann/bruh/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IMIHonigmann/bruh.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "convertModels.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "convert-models": "./convertModels.js"
+  }
+}
