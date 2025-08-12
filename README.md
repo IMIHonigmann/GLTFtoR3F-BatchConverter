@@ -1,6 +1,6 @@
 # GLTF to JSX Batch Converter
 
-A small CLI tool that watches a folder of GLTF files and generates ready-to-use **JSX** components for use with **react-three-fiber (R3F)**.
+A CLI tool that watches a folder of GLTF files and generates ready-to-use **JSX** components for use with **react-three-fiber (R3F)**. Conversion is handled by the gltfjsx library.
 
 > If you frequently convert many GLTF models to JSX, this script automates the repetitive parts and creates components you can import right away.
 
@@ -60,21 +60,32 @@ This tool is intentionally opinionated to reduce accidental complexity. Please n
 **This works:**
 
 ```
-/modelsDir
-  /Gun
-    /Base
-    /Magazine
-    /Scope
+modelsDir/
+  Gun/
+    Base/
+    Magazine/
+    Scope/
 ```
 
 **This will be ignored for nested deeper than one level:**
 
 ```
-/modelsDir
-  /Gun
-    /Base
-      /Scope   <-- this nested folder will be ignored
-    /Magazine
+modelsDir/
+  Gun/
+    Base/
+      Scope/   <-- this nested folder will be ignored
+    Magazine/
+```
+
+**Any subfolder where a gltf/glb file exists on the same level will also be ignored:**
+
+```
+modelsDir/
+  Gun/
+    scene.gltf <-- scene file on the same level as the subfolder Base
+    Base/ <-- Base will not be checked
+    Scope/
+    Magazine/
 ```
 
 This restriction keeps generated outputs predictable and the folder structure maintainable.
@@ -142,11 +153,13 @@ function CustomizerScene({ weaponId }: Props) {
 
     if (!moduleLoader) return null;
 
-    // Return a lazily-loaded React component
     return lazy(async () => {
       const mod = await moduleLoader();
-      // prefer default export, then a named export keyed by id, else fall back to a no-op component
-      const Component = mod.default ?? mod[weaponId] ?? (() => null);
+      const Component =
+        mod.default ??
+        mod[weaponId] ??
+        mod[`mainSubfolderName-${weaponId}`] ??
+        (() => null);
       return { default: Component };
     });
   }, [weaponId]);
@@ -174,4 +187,5 @@ export default CustomizerScene;
 
 ### Notes
 
-- Note: The example assumes you have a `weaponModules` map that returns a dynamic `import()` function for each generated component path. How you create that map depends on your bundler (Vite, Webpack, etc.).
+- The example assumes you have a `weaponModules` map that returns a dynamic `import()` function for each generated component path. How you create that map depends on your bundler (Vite, Webpack, etc.).
+- If you want a more detailed example check out my project [Soushakaze](https://github.com/IMIHonigmann/soushakaze-app) which makes heavy use of this npm package.
