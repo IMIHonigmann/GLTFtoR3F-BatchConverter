@@ -21,35 +21,53 @@ function convertModels({
     const folderPath = path.join(modelsDir, folder);
     if (!fs.statSync(folderPath).isDirectory()) return;
     const gltf = path.join(folderPath, "scene.gltf");
+    const glb = path.join(folderPath, "scene.glb");
+    let glFile = fs.existsSync(gltf) ? gltf : fs.existsSync(glb) ? glb : null;
+
     if (fs.existsSync(`${outputDir}/${folder}.tsx`)) {
       console.log(`🚫 Skipped ${modelsDir}/${folder}`);
       return;
     }
-    if (!fs.existsSync(gltf)) {
+    if (!glFile) {
+      console.log(`ℹ️ ${modelsDir}/${folder} is empty`);
       fs.readdirSync(`${modelsDir}/${folder}`).forEach((subfolder) => {
         const subFolderPath = path.join(modelsDir, folder, subfolder);
         if (!fs.statSync(subFolderPath).isDirectory()) return;
         const subGltf = path.join(modelsDir, folder, subfolder, "scene.gltf");
-        const subFolderFileName = `${subfolder}-${folder}`;
+        const subGlb = path.join(modelsDir, folder, subfolder, "scene.glb");
+        let subGlFile = fs.existsSync(subGltf)
+          ? subGltf
+          : fs.existsSync(subGlb)
+          ? subGlb
+          : null;
+        if (fs.existsSync(`${outputDir}/${folder}.tsx`)) {
+          console.log(`🚫 Skipped ${modelsDir}/${folder}`);
+          return;
+        }
+        const subFolderFileName = `${folder}-${subfolder}`;
+
         if (fs.existsSync(`${outputDir}/${subFolderFileName}.tsx`)) {
           console.log(`🚫 Skipped ${modelsDir}/${folder}/${subfolder}`);
           return;
         }
-        if (!fs.existsSync(subGltf)) return;
-        createFile(subGltf, subFolderFileName, outputDir);
+        if (!subGlFile) {
+          console.log(`ℹ️ ${modelsDir}/${folder}/${subfolder} is empty`);
+          return;
+        }
+        createFile(subGlFile, subFolderFileName, outputDir);
       });
       return;
     }
 
-    createFile(gltf, folder, outputDir);
+    createFile(glFile, folder, outputDir);
   });
 }
 
-function createFile(gltf, folder, outputDir) {
-  console.log(`🔄 ${gltf} is being converted`);
+function createFile(glFile, folder, outputDir) {
+  console.log(`🔄 ${glFile} is being converted`);
 
   const outputFile = path.join(outputDir, `${folder}.tsx`);
-  execSync(`npx gltfjsx "${gltf}" --types --output "${outputFile}"`);
+  execSync(`npx gltfjsx "${glFile}" --types --output "${outputFile}"`);
 
   let content = fs.readFileSync(outputFile, "utf8");
   content = content
@@ -75,7 +93,8 @@ function createFile(gltf, folder, outputDir) {
 
     return (`
     )
-    .replace(/'\/scene\.gltf'/g, `'${gltf.replace(/\\/g, "/")}'`);
+    .replace(/'\/scene\.gltf'/g, `'${glFile.replace(/\\/g, "/")}'`)
+    .replace(/'\/scene\.glb'/g, `'${glFile.replace(/\\/g, "/")}'`);
 
   fs.writeFileSync(outputFile, content);
   console.log(`✔️ Successfully processed and wrote: ${outputFile}`);
