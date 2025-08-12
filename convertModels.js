@@ -13,9 +13,11 @@ function getArgs() {
   return args;
 }
 
+const projectRoot = path.resolve(__dirname);
+
 function convertModels({
-  modelsDir = "./3DModels",
-  outputDir = "./ModelDefinitions",
+  modelsDir = path.join(projectRoot, "3DModels"),
+  outputDir = path.join(projectRoot, "ModelDefinitions"),
 } = {}) {
   fs.readdirSync(modelsDir).forEach((folder) => {
     const folderPath = path.join(modelsDir, folder);
